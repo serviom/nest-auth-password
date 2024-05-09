@@ -1,0 +1,70 @@
+  services:
+    mongodb:
+      container_name: mongodb-auth-google-oauth
+      image: mongo:latest
+      environment:
+        - MONGODB_DATABASE="authpassword"
+      ports:
+        - "27017:27017"
+      expose:
+        - "27017"
+      networks:
+        - auth-google-network
+
+    node-auth-google-oauth:
+      container_name: node-auth-google-oauth
+      image: "node:20"
+      working_dir: /home/node/app
+      environment:
+        - NODE_ENV=developer
+      volumes:
+        - ./:/home/node/app
+      expose:
+        - "3000"
+        - "587"
+      ports: # use if it is necessary to expose the container to the host machine
+        - "3000:3000"
+      networks:
+        - auth-google-network
+      command: "npm run start:dev"
+
+    mysql-auth-google-oauth:
+      container_name: mysql-auth-google-oauth
+      image: mysql:8
+      restart: always
+      environment:
+        MYSQL_ROOT_PASSWORD: root
+        MYSQL_DATABASE: google_oauth2_app
+      ports:
+        - "3306:3306"
+      expose:
+        - "3306"
+      networks:
+        - auth-google-network
+
+    redis-auth-google-oauth:
+      container_name: redis-auth-google-oauth
+      image: redis:latest
+      ports:
+        - '6379:6379'
+      expose:
+        - "6379"
+      networks:
+        - auth-google-network
+
+    rcli-auth-google-oauth:
+      container_name: rcli-auth-google-oauth
+      image: redis:latest
+      links:
+        - redis-auth-google-oauth
+      command: redis-cli -h redis-auth-google-oauth
+      networks:
+        - auth-google-network
+
+  #Docker Networks
+  networks:
+    auth-google-network:
+      driver: bridge
+  volumes:
+    auth-google-database:
+      driver: local
